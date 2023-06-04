@@ -1,0 +1,6 @@
+{
+  "project_name": "HyperEdge Game App",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "project_short_description": "Python Boilerplate contains all the boilerplate you need to create a HyperEdge Game App.",
+  "version": "0.0.1"
+}
