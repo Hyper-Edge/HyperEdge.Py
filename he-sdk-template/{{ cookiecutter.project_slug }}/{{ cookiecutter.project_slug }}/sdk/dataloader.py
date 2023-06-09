@@ -1,12 +1,13 @@
 import json
 import importlib
 import inspect
+import inflection
 import pathlib
 import typing
 
 from {{ cookiecutter.project_slug }}.sdk.models.types import is_new_type, Ulid
 from {{ cookiecutter.project_slug }}.sdk.models.base import _BaseModel
-from {{ cookiecutter.project_slug }}.sdk.models import BaseData, DataRef
+from {{ cookiecutter.project_slug }}.sdk.models import *
 
 
 class Wrapped(object):
@@ -67,7 +68,7 @@ class Wrapped(object):
 def datadef_to_json(cls):
     flds = []
     for fname, fdef in cls.__fields__.items():
-        flds.append({'Name': fname, 'Type': get_cs_type(fdef.outer_type_)})
+        flds.append({'Name': fname, 'Typename': get_cs_type(fdef.outer_type_)})
     return dict(
         Name=cls.__name__,
         Fields=flds
@@ -120,6 +121,7 @@ def get_cs_type(fdef: type, dto=False):
 class DataLoader(object):
     def __init__(self, package_name):
         self._data_classes = []
+        self._model_classes = []
         self.iterate_dataclasses(package_name)
 
     def iterate_dataclasses_in_package(self, package_name):
@@ -132,10 +134,13 @@ class DataLoader(object):
                     continue
                 if obj is _BaseModel:
                     continue
-                self._data_classes.append(obj)
+                if issubclass(obj, DataModel):
+                    print(obj)
+                    self._model_classes.append(obj)
+                elif issubclass(obj, BaseData):
+                    self._data_classes.append(obj)
             elif isinstance(obj, BaseData):
                 pass
-
 
     def iterate_dataclasses(self, package_name: str):
         package = importlib.import_module(package_name)
@@ -149,6 +154,10 @@ class DataLoader(object):
             self.iterate_dataclasses_in_package(pname)
 
     def to_json(self):
+        data = self.to_dict()
+        return json.dumps(data, indent=4)
+
+    def to_dict(self):
         data_classes = []
         model_classes = []
         struct_classes = []
@@ -161,16 +170,21 @@ class DataLoader(object):
             else:
                 struct_classes.append(j)
         #
+        for cls in self._model_classes:
+            j = datadef_to_json(cls)
+            model_classes.append(j)
+        #
         for cls in BaseData.dataclasses():
             for data_inst in BaseData.instances(cls):
                 j = datainst_to_json(cls, data_inst)
                 if cls.__name__ not in data_class_instances:
                     data_class_instances[cls.__name__] = []
                 data_class_instances[cls.__name__].append(j)
-        data = dict(
+        #
+        return dict(
             DataClasses=data_classes,
             ModelClasses=model_classes,
-            Structs=struct_classes,
-            DataClassInstances=data_class_instances
+            StructClasses=struct_classes,
+            DataClassInstances=data_class_instances,
+            Inventories=[inv.to_dict() for inv in Inventory.all()]
         )
-        return json.dumps(data, indent=4)

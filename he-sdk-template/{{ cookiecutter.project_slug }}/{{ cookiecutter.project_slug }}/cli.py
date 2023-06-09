@@ -5,6 +5,7 @@ import typer
 
 
 from {{ cookiecutter.project_slug }}.sdk.dataloader import DataLoader
+from {{ cookiecutter.project_slug }}.sdk.client import HEClient, AppDefDTO
 
 
 cli_app = typer.Typer()
@@ -14,6 +15,14 @@ cli_app = typer.Typer()
 def collect():
     dl = DataLoader('{{cookiecutter.project_slug}}.models')
     print(dl.to_json())
+
+@cli_app.command()
+def export():
+    dl = DataLoader('{{cookiecutter.project_slug}}.models')
+    j_app_data = dl.to_json()
+    app_def = AppDefDTO(**j_app_data)
+    client = HEClient()
+    client.export_app(app_def)
 
 
 def _get_models_paths():
