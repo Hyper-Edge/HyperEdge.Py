@@ -1,6 +1,6 @@
 import sys
 import typing
-import ulid
+from ulid import ULID
 
 
 UInt64 = typing.NewType("UInt64", int)
@@ -18,7 +18,7 @@ class Ulid(str):
     def validate(cls, v):
         if not isinstance(v, str):
             raise TypeError('string required')
-        u = ulid.ULID.from_str(v)
+        u = ULID.from_str(v)
         return cls(str(u))
 
     def __repr__(self):

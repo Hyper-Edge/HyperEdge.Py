@@ -92,17 +92,55 @@ class {inflection.camelize(name)}(DataModel):
         f.write(s)
 
 
-@cli_app.command()
-def create_upgradable():
+
+@cli_app.command( )
+def create_upgradeable(name: str, dataref: str, fields: typing.List[str]):
     """
-    Create an upgradable.
+    Create an upgradeable.
     """
-    pass
+    fname = inflection.underscore(name)
+    fpath = _get_models_paths().joinpath(f'{fname}.py')
+    #
+    s = f"""from {{ cookiecutter.project_slug }}.sdk.models import DataRef, Upgradeable
+from {{ cookiecutter.project_slug }}.models.{inflection.underscore(dataref)} import {inflection.camelize(dataref)}
+
+
+class {inflection.camelize(name)}(Upgradeable):
+    Ladder: DataRef[{inflection.camelize(dataref)}]
+"""
+
+    for fld in fields:
+        fld_ = fld.split(':')
+        fname, ftype = fld_
+        s += f"    {inflection.camelize(fname)}: {ftype}\n"
+    #
+    if fpath.exists():
+        raise Exception(f"File {str(fpath)} already exists")
+
+    with open(str(fpath), 'w') as f:
+        f.write(s)
 
 
 @cli_app.command()
-def create_ladder():
+def create_ladder(name: str, fields: typing.List[str]):
     """
     Create a ladder.
     """
-    pass
+    fname = inflection.underscore(name)
+    fpath = _get_models_paths().joinpath(f'{fname}.py')
+    #
+    s = f"""from {{ cookiecutter.project_slug }}.sdk.models import DataModel
+
+class {inflection.camelize(name)}(DataModel):
+"""
+
+    for fld in fields:
+        fld_ = fld.split(':')
+        fname, ftype = fld_
+        s += f"    {inflection.camelize(fname)}: {ftype}\n"
+    #
+    if fpath.exists():
+        raise Exception(f"File {str(fpath)} already exists")
+
+    with open(str(fpath), 'w') as f:
+        f.write(s)

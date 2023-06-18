@@ -2,10 +2,10 @@ import os
 import pydantic
 import requests
 import typing
-import ulid
+from ulid import ULID
 
 
-_EMPTY_ULID = ulid.ULID(bytes(16))
+_EMPTY_ULID = ULID(bytes(16))
 
 
 class DataClassFieldDTO(pydantic.BaseModel):
