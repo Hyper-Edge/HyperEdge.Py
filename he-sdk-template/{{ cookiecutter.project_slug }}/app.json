@@ -1,0 +1,5 @@
+{
+  "Id": "",
+  "Name": "{{ cookiecutter.project_slug }}",
+  "Versions": []
+}

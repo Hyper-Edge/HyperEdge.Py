@@ -6,6 +6,7 @@ import json
 
 from {{ cookiecutter.project_slug }}.sdk.dataloader import DataLoader
 from {{ cookiecutter.project_slug }}.sdk.client import HEClient, AppDefDTO
+from {{ cookiecutter.project_slug }}.sdk.appdata import AppData
 
 
 cli_app = typer.Typer()
@@ -19,17 +20,20 @@ def collect():
     dl = DataLoader('{{cookiecutter.project_slug}}.models')
     print(dl.to_json())
 
+
 @cli_app.command()
 def export():
     """
     Exports all data model definitions in the project to hyperedge's backend
     """
+    app_manifest = AppData.load()
     dl = DataLoader('{{cookiecutter.project_slug}}.models')
-    j_app_data = dl.to_json()
-    app_data_dict = json.loads(j_app_data)
-    app_def = AppDefDTO(**app_data_dict)
+    j_app_data = dl.to_dict()
+    app_def = AppDefDTO(Name=app_manifest.Name, **j_app_data)
     client = HEClient()
-    client.export_app(app_def)
+    resp = client.export_app(app_def)
+    app_manifest.Id = resp.AppId
+    app_manifest.save()
 
 
 def _get_models_paths():
