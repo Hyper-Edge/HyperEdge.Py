@@ -182,10 +182,15 @@ class DataLoader(object):
                 data_class_instances[cls.__name__].append(j)
         #
         return dict(
-            Name=f'{{ cookiecutter.project_name }}',
             DataClasses=data_classes,
             ModelClasses=model_classes,
             StructClasses=struct_classes,
             DataClassInstances=data_class_instances,
-            Inventories=[inv.to_dict() for inv in Inventory.all()]
+            Inventories=[inv.to_dict() for inv in Inventory.all()],
+            Quests=[],
+            Tournaments=[],
+            BattlePasses=[],
+            Progressions=[],
+            ProgressionLadders=[],
+            CraftRules=[]
         )

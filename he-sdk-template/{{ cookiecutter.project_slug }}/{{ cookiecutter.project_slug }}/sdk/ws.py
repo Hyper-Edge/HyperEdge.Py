@@ -9,7 +9,7 @@ import websocket
 class JobData(pydantic.BaseModel):
     job_id: str
     success: bool
-    data: dict
+    retval: object
 
 
 def _get_ws_job_id(v):
@@ -32,7 +32,7 @@ def _ws_listener(ws, queue: multiprocessing.Queue):
                     continue
                 print(jmsg)
                 is_success = jmsg['data'].get('status') == 'success'
-                job_data = JobData(job_id=job_id, success=is_success, data=jmsg['data'])
+                job_data = JobData(job_id=job_id, success=is_success, retval=jmsg['data'].get('retval'))
                 print(job_data)
                 queue.put(job_data)
         except websocket.WebSocketConnectionClosedException:
