@@ -148,3 +148,45 @@ class {inflection.camelize(name)}(DataModel):
 
     with open(str(fpath), 'w') as f:
         f.write(s)
+
+@cli_app.command()
+def create_quest(name: str, reward: str, requirements: str):
+    """
+    Create a quest.
+    """
+    fname = inflection.underscore(name)
+    fpath = _get_models_paths().joinpath(f'{fname}.py')
+    #
+    s = f"""from {{ cookiecutter.project_slug }}.sdk.models import DataModel, DataRef
+from {{ cookiecutter.project_slug }}.models.{inflection.underscore(reward)} import {inflection.camelize(reward)}
+from {{ cookiecutter.project_slug }}.models.{inflection.underscore(requirements)} import {inflection.camelize(requirements)}
+
+class {inflection.camelize(name)}(DataModel):
+    Reward: DataRef[{inflection.camelize(reward)}]
+    Requirements: DataRef[{inflection.camelize(requirements)}]
+"""
+    if fpath.exists():
+        raise Exception(f"File {str(fpath)} already exists")
+    
+
+
+@cli_app.command()
+def create_battlepass(name: str, battlequests: typing.List[quests], battletiers: typing.List[quests]):
+    """
+    Create a battlepass.
+    """
+    fname = inflection.underscore(name)
+    fpath = _get_models_paths().joinpath(f'{fname}.py')
+    #
+    s = f"""from {{ cookiecutter.project_slug }}.sdk.models import DataModel, DataRef
+from {{ cookiecutter.project_slug }}.models.{inflection.underscore(battlequests)} import {inflection.camelize(battlequests)}
+from {{ cookiecutter.project_slug }}.models.{inflection.underscore(battletiers)} import {inflection.camelize(battletiers)}
+
+class {inflection.camelize(name)}(DataModel):
+    BattleQuests: DataRef[{inflection.camelize(battlequests)}]
+    BattleTiers: DataRef[{inflection.camelize(battletiers)}]
+"""
+    if fpath.exists():
+        raise Exception(f"File {str(fpath)} already exists")
+
+
