@@ -227,7 +227,7 @@ class HEClient(object):
 
     def start_server(self, uid):
         req = StartServerRequest(Id=uid)
-        resp = self._post_json(f"{self._misc_base_url}/StartServer", req.json())
+        resp = self._post_json(f"{self._misc_base_url}/server/start", req.json())
         job_data = self.ws.wait_for_job(resp['JobId'])
         if not job_data.success:
             raise Exception()
