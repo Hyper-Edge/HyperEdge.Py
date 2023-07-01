@@ -37,6 +37,31 @@ def export():
     app_manifest.save()
 
 
+@cli_app.command()
+def gen_code():
+    app_manifest = AppData.load()
+    client = HEClient()
+    resp = client.gen_code(app_manifest.Id)
+    print(resp)
+
+
+@cli_app.command()
+def build():
+    app_manifest = AppData.load()
+    client = HEClient()
+    resp = client.build_server(app_manifest.Id)
+    print(resp)
+    #app_manifest.save()
+
+
+@cli_app.command()
+def start_server():
+    app_manifest = AppData.load()
+    client = HEClient()
+    resp = client.start_server(app_manifest.Id)
+    print(resp)
+
+
 def _get_models_paths():
     return pathlib.Path(__file__).parent.joinpath('models')
 
