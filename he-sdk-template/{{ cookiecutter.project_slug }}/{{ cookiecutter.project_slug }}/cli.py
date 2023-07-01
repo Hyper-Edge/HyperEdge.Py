@@ -12,6 +12,7 @@ from {{ cookiecutter.project_slug }}.sdk.appdata import AppData
 cli_app = typer.Typer()
 
 
+
 @cli_app.command()
 def collect():
     """
@@ -34,6 +35,9 @@ def export():
     resp = client.export_app(app_def)
     app_manifest.Id = resp.AppId
     app_manifest.save()
+    #
+    current_app_def_filepath = pathlib.Path(__file__).parents[1].joinpath('data', 'current.json')
+    client.download_file_by_id(resp.AppDefFileId, str(current_app_def_filepath))
 
 
 @cli_app.command()

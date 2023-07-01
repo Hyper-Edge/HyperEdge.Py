@@ -157,6 +157,7 @@ class ExportAppRequest(pydantic.BaseModel):
 
 class ExportAppResponse(pydantic.BaseModel):
     AppId: str
+    AppDefFileId: str
 
 
 class GenCodeRequest(pydantic.BaseModel):
@@ -207,7 +208,7 @@ class HEClient(object):
         job_data = self.ws.wait_for_job(resp['JobId'])
         if not job_data.success:
             raise Exception()
-        return ExportAppResponse(AppId=job_data.retval['AppId'])
+        return ExportAppResponse(**job_data.retval)
 
     def gen_code(self, uid: str):
         req = GenCodeRequest(Id=uid)
@@ -236,6 +237,16 @@ class HEClient(object):
     def get_ticket(self) -> str:
         resp = self._get_json(f"{self._misc_base_url}/ws/ticket")
         return resp['ticket']
+
+    def download_file_by_id(self, file_uid: str, filepath: str):
+        link = self._get_file_link(file_uid)
+        resp = requests.get(link)
+        with open(filepath, 'w') as f:
+            f.write(resp.text)
+
+    def _get_file_link(self, file_uid: str) -> str:
+        resp = self._get_json(f"{self._misc_base_url}/file/{file_uid}")
+        return resp['url']
 
     def _get_headers(self) -> dict:
         if not self._api_key:
