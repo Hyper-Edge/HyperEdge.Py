@@ -202,7 +202,7 @@ class HEClient(object):
     def _misc_base_url(self):
         return f'{self._url}/api/bc'
 
-    def export_app(self, data: AppDefDTO, app_uid: ulid.ULID = _EMPTY_ULID):
+    def export_app(self, data: AppDefDTO, app_uid: ULID = _EMPTY_ULID):
         req = ExportAppRequest(AppId=str(app_uid), AppDef=data)
         resp = self._post_json(f'{self._depot_base_url}/ExportApp', req.json())
         job_data = self.ws.wait_for_job(resp['JobId'])
