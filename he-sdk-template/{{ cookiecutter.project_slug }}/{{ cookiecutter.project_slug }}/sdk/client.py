@@ -135,11 +135,29 @@ class TournamentDTO(pydantic.BaseModel):
     Data: DataClassFieldsDTO
 
 
+class EnergySystemDTO(pydantic.BaseModel):
+    Id: typing.Optional[str]
+    Name: str
+    InitialValue: int
+    RegenValue: int
+    RegenRate: int
+    MaxCapacity: int
+
+
+class RequestHandlerDTO(pydantic.BaseModel):
+    Id: typing.Optional[str]
+    Name: str
+    RequestClassId: str
+    ResponseClassId: str
+
+
 class AppDefDTO(pydantic.BaseModel):
+    Id: typing.Optional[str]
     Name: str
     DataClasses: typing.List[DataClassDTO]
     ModelClasses: typing.List[DataClassDTO]
     StructClasses: typing.List[DataClassDTO]
+    StorageClasses: typing.List[typing.Tuple[int, DataClassDTO]]
     DataClassInstances: typing.Dict[str, typing.List[DataClassInstanceDTO]]
     Inventories: typing.List[InventoryDefDTO]
     Quests: typing.List[QuestDTO]
@@ -148,6 +166,9 @@ class AppDefDTO(pydantic.BaseModel):
     Progressions: typing.List[ProgressionSystemDTO]
     ProgressionLadders: typing.List[GenericLadderDTO]
     CraftRules: typing.List[CraftRulesDTO]
+    Rewards: typing.List[RewardDTO]
+    EnergySystems: typing.List[EnergySystemDTO]
+    RequestHandlers: typing.List[RequestHandlerDTO]
 
 
 class ExportAppRequest(pydantic.BaseModel):
@@ -157,6 +178,19 @@ class ExportAppRequest(pydantic.BaseModel):
 
 class ExportAppResponse(pydantic.BaseModel):
     AppId: str
+    AppDefFileId: str
+
+
+class ReleaseAppRequest(pydantic.BaseModel):
+    AppId: str
+    VersionName: str
+    AppDef: AppDefDTO
+
+
+class ReleaseAppResponse(pydantic.BaseModel):
+    AppId: str
+    VersionId: str
+    VersionName: str
     AppDefFileId: str
 
 
@@ -170,6 +204,34 @@ class GenCodeResponse(pydantic.BaseModel):
 
 class BuildServerRequest(pydantic.BaseModel):
     Id: str
+
+
+class BuildAppVersionRequest(pydantic.BaseModel):
+    AppId: str
+    VersionName: str
+
+
+class BuildAppVersionResponse(pydantic.BaseModel):
+    ServerFilesArchiveId: str
+    ServerImageId: typing.Optional[str]
+    SyncBotImageId: typing.Optional[str]
+
+
+class CreateAppEnvRequest(pydantic.BaseModel):
+    AppId: str
+    Name: str
+
+
+class CreateAppEnvResponse(pydantic.BaseModel):
+    Id: str
+    AppId: str
+    Name: str
+
+
+class RunAppRequest(pydantic.BaseModel):
+    AppId: str
+    VersionId: str
+    EnvId: str
 
 
 class StartServerRequest(pydantic.BaseModel):
@@ -199,16 +261,48 @@ class HEClient(object):
         return f'{self._url}/api/IDepotService'
 
     @property
+    def _apps_base_url(self):
+        return f'{self._url}/api/IAppsService'
+
+    @property
     def _misc_base_url(self):
         return f'{self._url}/api/bc'
 
-    def export_app(self, data: AppDefDTO, app_uid: ULID = _EMPTY_ULID):
-        req = ExportAppRequest(AppId=str(app_uid), AppDef=data)
+    def export_app(self, data: AppDefDTO):
+        req = ExportAppRequest(AppId=data.Id or str(_EMPTY_ULID), AppDef=data)
         resp = self._post_json(f'{self._depot_base_url}/ExportApp', req.json())
         job_data = self.ws.wait_for_job(resp['JobId'])
         if not job_data.success:
             raise Exception()
         return ExportAppResponse(**job_data.retval)
+
+    def release_app(self, data: AppDefDTO, app_uid: ulid.ULID, version_name: str):
+        req = ReleaseAppRequest(AppId=str(app_uid), VersionName=version_name, AppDef=data)
+        resp = self._post_json(f'{self._depot_base_url}/ReleaseApp', req.json())
+        job_data = self.ws.wait_for_job(resp['JobId'])
+        if not job_data.success:
+            raise Exception()
+        return ReleaseAppResponse(**job_data.retval)
+
+    def build_app(self, app_uid: ulid.ULID, version_name: str):
+        req = BuildAppVersionRequest(AppId=str(app_uid), VersionName=version_name)
+        resp = self._post_json(f'{self._apps_base_url}/BuildApp', req.json())
+        job_data = self.ws.wait_for_job(resp['JobId'])
+        if not job_data.success:
+            raise Exception()
+        return BuildAppVersionResponse(**job_data.retval)
+
+    def create_app_env(self, app_uid: ulid.ULID, env_name: str):
+        req = CreateAppEnvRequest(AppId=str(app_uid), Name=env_name)
+        resp = self._post_json(f'{self._apps_base_url}/CreateAppEnv', req.json())
+        return CreateAppEnvResponse(**resp.get('AppEnv', dict()))
+
+    def run_app(self, app_uid: str, version_uid: str, env_uid: str):
+        req = RunAppRequest(AppId=app_uid, VersionId=version_uid, EnvId=env_uid)
+        resp = self._post_json(f'{self._apps_base_url}/RunApp', req.json())
+        job_data = self.ws.wait_for_job(resp['JobId'])
+        if not job_data.success:
+            raise Exception()
 
     def gen_code(self, uid: str):
         req = GenCodeRequest(Id=uid)

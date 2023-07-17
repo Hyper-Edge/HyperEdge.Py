@@ -7,7 +7,7 @@ import json
 
 from {{ cookiecutter.project_slug }}.sdk.dataloader import DataLoader
 from {{ cookiecutter.project_slug }}.sdk.client import HEClient, AppDefDTO
-from {{ cookiecutter.project_slug }}.sdk.appdata import AppData
+from {{ cookiecutter.project_slug }}.sdk.appdata import AppData, AppEnvData, AppVersionData
 
 
 cli_app = typer.Typer()
@@ -32,6 +32,8 @@ def export():
     dl = DataLoader('{{cookiecutter.project_slug}}.models')
     j_app_data = dl.to_dict()
     app_def = AppDefDTO(Name=app_manifest.Name, **j_app_data)
+    if app_manifest.Id:
+        app_def.Id = app_manifest.Id
     client = HEClient()
     resp = client.export_app(app_def)
     app_manifest.Id = resp.AppId
@@ -42,20 +44,72 @@ def export():
 
 
 @cli_app.command()
+def release(version_name: str):
+    """
+    Make a release and push all data model definitions in the project to hyperedge's backend
+    """
+    app_manifest = AppData.load()
+    if not app_manifest.Id:
+        raise Exception("AppId is empty. You should export app first")
+    if app_manifest.has_version(version_name):
+        print(f"Version {version_name} already exist")
+        return
+    dl = DataLoader('{{cookiecutter.project_slug}}.models')
+    j_app_data = dl.to_dict()
+    app_def = AppDefDTO(Name=app_manifest.Name, **j_app_data)
+    client = HEClient()
+    resp = client.release_app(app_def, app_manifest.Id, version_name)
+    #
+    app_manifest.add_version(AppVersionData(Id=resp.VersionId, Name=resp.VersionName))
+    app_manifest.save()
+    #
+    current_app_def_filepath = pathlib.Path(__file__).parents[1].joinpath('data', f'app-{version_name}.json')
+    client.download_file_by_id(resp.AppDefFileId, str(current_app_def_filepath))
+
+
+@cli_app.command()
+def build(version_name: str):
+    app_manifest = AppData.load()
+    if not app_manifest.has_version(version_name):
+        raise Exception(f"Unknown version: {version_name}")
+    client = HEClient()
+    resp = client.build_app(app_manifest.Id, version_name)
+    print(resp)
+
+
+@cli_app.command()
+def create_env(env_name: str):
+    app_manifest = AppData.load()
+    if app_manifest.has_app_env(env_name):
+        print(f'AppEnv {env_name} already exists.')
+        return
+    client = HEClient()
+    resp = client.create_app_env(app_manifest.Id, env_name)
+    app_manifest.add_app_env(AppEnvData(Id=resp.Id, Name=resp.Name))
+    app_manifest.save()
+
+
+@cli_app.command()
+def run(version_name: str, env_name: str):
+    app_manifest = AppData.load()
+    version = app_manifest.get_version(version_name)
+    if version is None:
+        print(f"Version {env_name} doesn't exist.")
+        return
+    app_env = app_manifest.get_app_env(env_name)
+    if app_env is None:
+        print(f"AppEnv {env_name} doesn't exist.")
+        return
+    client = HEClient()
+    resp = client.run_app(app_manifest.Id, version.Id, app_env.Id)
+
+
+@cli_app.command()
 def gen_code():
     app_manifest = AppData.load()
     client = HEClient()
     resp = client.gen_code(app_manifest.Id)
     print(resp)
-
-
-@cli_app.command()
-def build():
-    app_manifest = AppData.load()
-    client = HEClient()
-    resp = client.build_server(app_manifest.Id)
-    print(resp)
-    #app_manifest.save()
 
 
 @cli_app.command()

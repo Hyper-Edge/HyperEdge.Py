@@ -21,8 +21,7 @@ class Wrapped(object):
         self._var_name_camel_plural = inflection.pluralize(self._var_name_camel)
         self._var_name_plural = inflection.pluralize(self._var_name)
         self._data = None
-        #if self._cls.is_erc721():
-        #    self._data = Wrapped(cgen.get_data_type_for_model(cls), cgen)
+
 
     @property
     def uid(self):
@@ -68,6 +67,8 @@ class Wrapped(object):
 def datadef_to_json(cls):
     flds = []
     for fname, fdef in cls.__fields__.items():
+        if fname == 'id':
+            continue
         flds.append({'Name': fname, 'Typename': get_cs_type(fdef.outer_type_)})
     return dict(
         Name=cls.__name__,
@@ -185,6 +186,7 @@ class DataLoader(object):
             DataClasses=data_classes,
             ModelClasses=model_classes,
             StructClasses=struct_classes,
+            StorageClasses=[],
             DataClassInstances=data_class_instances,
             Inventories=[inv.to_dict() for inv in Inventory.all()],
             Quests=[],
@@ -192,5 +194,8 @@ class DataLoader(object):
             BattlePasses=[],
             Progressions=[],
             ProgressionLadders=[],
-            CraftRules=[]
+            CraftRules=[],
+            Rewards=[],
+            EnergySystems=[],
+            RequestHandlers=[]
         )
