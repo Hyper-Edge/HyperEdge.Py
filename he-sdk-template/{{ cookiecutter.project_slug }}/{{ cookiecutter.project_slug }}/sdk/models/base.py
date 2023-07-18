@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 import six
 
+from .types import get_cs_type
+
 
 class _BaseModelMeta(type(BaseModel)):
     _ATTRS = (
@@ -37,3 +39,15 @@ class _BaseModel(six.with_metaclass(_BaseModelMeta, BaseModel)):
     @classmethod
     def is_erc721(cls):
         return cls._nft
+
+    @classmethod
+    def to_dict(cls):
+        flds = []
+        for fname, fdef in cls.__fields__.items():
+            if fname == 'id':
+                continue
+            flds.append({'Name': fname, 'Typename': get_cs_type(fdef.outer_type_)})
+        return dict(
+            Name=cls.__name__,
+            Fields=flds
+        )
