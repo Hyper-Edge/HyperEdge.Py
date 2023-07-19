@@ -26,8 +26,13 @@ class DataLoader(object):
     def __init__(self, package_name):
         self._data_classes = []
         self._model_classes = []
+        self._struct_classes = []
         self._rewards: typing.List[Reward] = []
+        self._crafts: typing.List[CraftRule] = []
         self._progressions: typing.List[ProgressionLadder] = []
+        self._battle_passes: typing.List[BattlePass] = []
+        self._quests: typing.List[Quest] = []
+        self._energy_systems: typing.List[EnergySystem] = []
         self.iterate_dataclasses(package_name)
 
     def iterate_dataclasses_in_package(self, package_name):
@@ -46,12 +51,22 @@ class DataLoader(object):
                     self._model_classes.append(obj)
                 elif issubclass(obj, BaseData):
                     self._data_classes.append(obj)
+                else:
+                    self._struct_classes.append(obj)
             elif isinstance(obj, BaseData):
                 pass
             elif isinstance(obj, Reward):
                 self._rewards.append(obj)
+            elif isinstance(obj, CraftRule):
+                self._crafts.append(obj)
             elif isinstance(obj, ProgressionLadder):
                 self._progressions.append(obj)
+            elif isinstance(obj, BattlePass):
+                self._battle_passes.append(obj)
+            elif isinstance(obj, Quest):
+                self._quests.append(obj)
+            elif isinstance(obj, EnergySystem):
+                self._energy_systems.append(obj)
 
     def iterate_dataclasses(self, package_name: str):
         package = importlib.import_module(package_name)
@@ -69,21 +84,7 @@ class DataLoader(object):
         return json.dumps(data, indent=4)
 
     def to_dict(self):
-        data_classes = []
-        model_classes = []
-        struct_classes = []
         data_class_instances = {}
-        #
-        for cls in self._data_classes:
-            j = cls.to_dict()
-            if issubclass(cls, BaseData):
-                data_classes.append(j)
-            else:
-                struct_classes.append(j)
-        #
-        for cls in self._model_classes:
-            cls.to_dict()
-            model_classes.append(j)
         #
         for cls in BaseData.dataclasses():
             for data_inst in BaseData.instances(cls):
@@ -93,19 +94,19 @@ class DataLoader(object):
                 data_class_instances[cls.__name__].append(j)
         #
         return dict(
-            DataClasses=data_classes,
-            ModelClasses=model_classes,
-            StructClasses=struct_classes,
+            DataClasses=[cls.to_dict() for cls in self._data_classes],
+            ModelClasses=[cls.to_dict() for cls in self._model_classes],
+            StructClasses=[cls.to_dict() for cls in self._struct_classes],
             StorageClasses=[],
             DataClassInstances=data_class_instances,
             Inventories=[inv.to_dict() for inv in Inventory.all()],
-            Quests=[],
+            Quests=[q.to_dict() for q in self._quests],
             Tournaments=[],
-            BattlePasses=[],
+            BattlePasses=[bp.to_dict() for bp in self._battle_passes],
             Progressions=[p.to_dict() for p in self._progressions],
             ProgressionLadders=[],
-            CraftRules=[],
+            CraftRules=[c.to_dict() for c in self._crafts],
             Rewards=[r.to_dict() for r in self._rewards],
-            EnergySystems=[],
+            EnergySystems=[es.dict() for es in self._energy_systems],
             RequestHandlers=[]
         )

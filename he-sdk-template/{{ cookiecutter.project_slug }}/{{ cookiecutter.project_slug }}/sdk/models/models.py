@@ -1,31 +1,59 @@
-import pydantic
-
 from .base import _BaseModel
 from .types import *
 from .data import BaseData
 
 
-class DataModel(_BaseModel):
-    _abstract = True
+class DataModelMeta(type(_BaseModel)):
+    def __new__(mcs, cls_name, bases, namespace):
+        new_cls = super().__new__(mcs, cls_name, bases, namespace)
+        setattr(new_cls, '__templates', dict())
+        setattr(new_cls, '__data_class', None)
+        return new_cls
+
+    def __getattr__(cls, name):
+        if name in cls._templates:
+            return cls.__templates[name]
+        return cls.__getattr__(name)
 
 
-class GameMechanics(_BaseModel):
+class DataModelTemplate(object):
+    def __init__(self, cls, data):
+        self._cls = cls
+        self._data = data
+
+
+class DataModel(_BaseModel, metaclass=DataModelMeta):
     _abstract = True
 
     @classmethod
-    def get_ignore_fields(cls):
-        return list()
+    def new_template(cls, data: BaseData) -> DataModelTemplate:
+        if not isinstance(data, cls.dataclass()):
+            raise TypeError()
+        tmpl = DataModelTemplate(cls, data)
+        cls.__templates[data.id] = tmpl
+        return tmpl
 
     @classmethod
     def dataclass(cls):
-        cls_name = 'xxx'
-        dyn_cls_args = dict(__base__=BaseData)
-        ignore_fields = cls.get_ignore_fields()
-        for fld_name, fdef in cls.__fields__.items():
-            if fld_name in ignore_fields:
+        if cls.__data_class:
+            return cls.__data_class
+        dcs = []
+        data_fld_cls = None
+        for fname, fdef in cls.__fields__.items():
+            t_origin = typing.get_origin(fdef)
+            if not t_origin:
                 continue
-            dyn_cls_args[fld_name] = (fdef.outer_type_, ...)
-        return pydantic.create_model(cls_name, **dyn_cls_args)
+            if t_origin.__name__ != 'DataRef':
+                continue
+            t_args = typing.get_args(fdef)
+            dcs.append(t_args[0])
+            if fname == 'Data':
+                data_fld_cls = t_args[0]
+        if data_fld_cls:
+            cls.__data_class = data_fld_cls
+        else:
+            cls.__data_class = dcs[0] if dcs else None
+        return cls.__data_class
 
 
 class Upgradeable(DataModel):
