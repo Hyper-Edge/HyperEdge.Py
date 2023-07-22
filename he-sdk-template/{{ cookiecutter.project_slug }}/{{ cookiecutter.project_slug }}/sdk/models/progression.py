@@ -14,7 +14,9 @@ class GenericLadderLevel(BaseData):
     Reward: typing.Optional[Reward]
     Cost: typing.Optional[Cost]
     Conditions: typing.Optional[typing.List[str]]
-
+    
+    class Config:
+        arbitrary_types_allowed = True
 
 class GenericLadder(_BaseModel):
     Name: str

@@ -11,9 +11,9 @@ class DataModelMeta(type(_BaseModel)):
         return new_cls
 
     def __getattr__(cls, name):
-        if name in cls._templates:
-            return cls.__templates[name]
-        return cls.__getattr__(name)
+        if name in cls.__dict__.get('__templates', {}):
+            return cls.__dict__['__templates'][name]
+        raise AttributeError(f"{cls.__name__} object has no attribute {name}")
 
 
 class DataModelTemplate(object):

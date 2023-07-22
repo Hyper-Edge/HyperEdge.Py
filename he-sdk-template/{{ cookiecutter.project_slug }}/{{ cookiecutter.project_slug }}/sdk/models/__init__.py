@@ -7,4 +7,4 @@ from .battle_pass import BattlePass
 from .progression import ProgressionLadder
 from .quest import Quest
 from .energy_system import EnergySystem
-
+from .crafting import CraftRule
