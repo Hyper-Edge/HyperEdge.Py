@@ -14,3 +14,4 @@ from .storage import \
     GlobalStorage,\
     UserStorage
 from .tournament import Tournament
+from .handler import Handler

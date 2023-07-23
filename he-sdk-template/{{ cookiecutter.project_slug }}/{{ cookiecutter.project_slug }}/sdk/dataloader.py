@@ -35,6 +35,7 @@ class DataLoader(object):
         self._quests: typing.List[Quest] = []
         self._energy_systems: typing.List[EnergySystem] = []
         self._tournaments: typing.List[Tournament] = []
+        self._request_handlers: typing.List[Handler] = []
 
         self.iterate_dataclasses(package_name)
 
@@ -71,6 +72,8 @@ class DataLoader(object):
                 self._energy_systems.append(obj)
             elif isinstance(obj, Tournament):
                 self._tournaments.append(obj)
+            elif isinstance(obj, Handler):
+                self._request_handlers.append(obj)
 
     def iterate_dataclasses(self, package_name: str):
         package = importlib.import_module(package_name)
@@ -112,5 +115,5 @@ class DataLoader(object):
             CraftRules=[c.to_dict() for c in self._crafts],
             Rewards=[r.to_dict() for r in self._rewards],
             EnergySystems=[es.dict() for es in self._energy_systems],
-            RequestHandlers=[]
+            RequestHandlers=[h.to_dict() for h in self._request_handlers]
         )
