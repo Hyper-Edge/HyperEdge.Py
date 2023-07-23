@@ -8,12 +8,12 @@ class Handler(_BaseModel):
     Name: str
     RequestClass: typing.Type[BaseData]
     ResponseClass: typing.Type[BaseData]
-    Lua: typing.Optional[str]
+    Code: typing.Optional[str]
 
     def to_dict(self):
         return dict(
             Name=self.Name,
             Model=self.RequestClass.__name__,
             Data=self.ResponseClass.__name__,
-            Lua=self.Lua
+            Code=self.Code
         )
