@@ -147,8 +147,10 @@ class EnergySystemDTO(pydantic.BaseModel):
 class RequestHandlerDTO(pydantic.BaseModel):
     Id: typing.Optional[str]
     Name: str
-    RequestClassId: str
-    ResponseClassId: str
+    RequestClassId: typing.Optional[str]
+    ResponseClassId: typing.Optional[str]
+    RequestClassName: str
+    ResponseClassName: str
 
 
 class AppDefDTO(pydantic.BaseModel):

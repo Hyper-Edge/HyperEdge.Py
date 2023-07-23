@@ -27,12 +27,15 @@ class DataLoader(object):
         self._data_classes = []
         self._model_classes = []
         self._struct_classes = []
+        self._storage_classes = []
         self._rewards: typing.List[Reward] = []
         self._crafts: typing.List[CraftRule] = []
         self._progressions: typing.List[ProgressionLadder] = []
         self._battle_passes: typing.List[BattlePass] = []
         self._quests: typing.List[Quest] = []
         self._energy_systems: typing.List[EnergySystem] = []
+        self._tournaments: typing.List[Tournament] = []
+
         self.iterate_dataclasses(package_name)
 
     def iterate_dataclasses_in_package(self, package_name):
@@ -46,15 +49,14 @@ class DataLoader(object):
                     continue
                 if obj is _BaseModel:
                     continue
-                if issubclass(obj, DataModel):
-                    print(obj)
+                if issubclass(obj, StorageBase):
+                    self._storage_classes.append((obj.get_storage_type(), obj))
+                elif issubclass(obj, DataModel):
                     self._model_classes.append(obj)
                 elif issubclass(obj, BaseData):
                     self._data_classes.append(obj)
                 else:
                     self._struct_classes.append(obj)
-            elif isinstance(obj, BaseData):
-                pass
             elif isinstance(obj, Reward):
                 self._rewards.append(obj)
             elif isinstance(obj, CraftRule):
@@ -67,6 +69,8 @@ class DataLoader(object):
                 self._quests.append(obj)
             elif isinstance(obj, EnergySystem):
                 self._energy_systems.append(obj)
+            elif isinstance(obj, Tournament):
+                self._tournaments.append(obj)
 
     def iterate_dataclasses(self, package_name: str):
         package = importlib.import_module(package_name)
@@ -97,11 +101,11 @@ class DataLoader(object):
             DataClasses=[cls.to_dict() for cls in self._data_classes],
             ModelClasses=[cls.to_dict() for cls in self._model_classes],
             StructClasses=[cls.to_dict() for cls in self._struct_classes],
-            StorageClasses=[],
+            StorageClasses=[(st_type, cls.to_dict()) for (st_type, cls) in self._storage_classes],
             DataClassInstances=data_class_instances,
             Inventories=[inv.to_dict() for inv in Inventory.all()],
             Quests=[q.to_dict() for q in self._quests],
-            Tournaments=[],
+            Tournaments=[t.to_dict() for t in self._tournaments],
             BattlePasses=[bp.to_dict() for bp in self._battle_passes],
             Progressions=[p.to_dict() for p in self._progressions],
             ProgressionLadders=[],
