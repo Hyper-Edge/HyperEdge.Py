@@ -31,6 +31,7 @@ class DataLoader(object):
         self._rewards: typing.List[Reward] = []
         self._crafts: typing.List[CraftRule] = []
         self._progressions: typing.List[ProgressionLadder] = []
+        self._ladders: typing.List[GenericLadder] = []
         self._battle_passes: typing.List[BattlePass] = []
         self._quests: typing.List[Quest] = []
         self._energy_systems: typing.List[EnergySystem] = []
@@ -64,6 +65,8 @@ class DataLoader(object):
                 self._crafts.append(obj)
             elif isinstance(obj, ProgressionLadder):
                 self._progressions.append(obj)
+            elif isinstance(obj, GenericLadder):
+                self._ladders.append(obj)
             elif isinstance(obj, BattlePass):
                 self._battle_passes.append(obj)
             elif isinstance(obj, Quest):
@@ -111,7 +114,7 @@ class DataLoader(object):
             Tournaments=[t.to_dict() for t in self._tournaments],
             BattlePasses=[bp.to_dict() for bp in self._battle_passes],
             Progressions=[p.to_dict() for p in self._progressions],
-            ProgressionLadders=[],
+            ProgressionLadders=[l.to_dict() for l in self._ladders],
             CraftRules=[c.to_dict() for c in self._crafts],
             Rewards=[r.to_dict() for r in self._rewards],
             EnergySystems=[es.dict() for es in self._energy_systems],

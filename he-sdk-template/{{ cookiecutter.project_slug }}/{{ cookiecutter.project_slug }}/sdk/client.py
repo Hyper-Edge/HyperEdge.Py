@@ -108,7 +108,8 @@ class GenericLadderLevelDTO(pydantic.BaseModel):
 
 class GenericLadderDTO(pydantic.BaseModel):
     Name: str
-    ProgressionId: str
+    ProgressionId: typing.Optional[str]
+    ProgressionName: str
     Levels: typing.List[GenericLadderLevelDTO]
 
 

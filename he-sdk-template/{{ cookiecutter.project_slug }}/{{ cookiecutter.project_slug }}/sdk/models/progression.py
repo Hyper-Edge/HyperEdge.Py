@@ -18,9 +18,11 @@ class GenericLadderLevel(BaseData):
     class Config:
         arbitrary_types_allowed = True
 
-class GenericLadder(_BaseModel):
+
+class GenericLadder(pydantic.BaseModel):
     Name: str
-    ProgressionId: str
+    ProgressionId: typing.Optional[str]
+    ProgressionName: str
     Levels: typing.List[GenericLadderLevel]
 
     def add_level(self, ll: GenericLadderLevel):
@@ -30,6 +32,7 @@ class GenericLadder(_BaseModel):
         return dict(
             Name=self.Name,
             ProgressionId=self.ProgressionId,
+            ProgressionName=self.ProgressionName,
             Levels=[l.to_dict() for l in self.Levels]
         )
 
@@ -64,7 +67,10 @@ class ProgressionLadder(_BaseModel):
         return self._FullLadderLevelData
 
     def new_ladder(self, name: str):
-        return self.ladder_class(Name=name, ProgressionId=type(self).__name__, Levels=list())
+        return self.ladder_class(
+            Name=name,
+            ProgressionName=type(self).__name__,
+            Levels=list())
 
     def to_dict(self):
         return dict(
